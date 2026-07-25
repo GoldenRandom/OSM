@@ -25,4 +25,4 @@ jobs:
       - name: Run Claimer
         env:
           OSM_COOKIES: ${{ secrets.OSM_COOKIES }}
-        run: xvfb-run --auto-servernum python claimer.py
+        run: xvfb-run --auto-servernum python -u claimer.py
