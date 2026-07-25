@@ -184,10 +184,15 @@ def claim_loop():
             log.error("Could not find Liverpool in any slot. Continuing anyway...")
 
         # 2. Launch browser and loop
-        # We launch headless=False. On cloud servers, this requires xvfb!
+        log.info("Launching browser...")
         browser = pw.chromium.launch(
             headless=False,
-            args=["--mute-audio", "--window-position=-32000,-32000", "--window-size=1280,800"]
+            channel="chrome",
+            args=[
+                "--mute-audio",
+                "--window-position=-32000,-32000",
+                "--window-size=1280,800"
+            ]
         )
         context = browser.new_context(
             viewport={"width": 1280, "height": 800},
@@ -236,8 +241,8 @@ def claim_loop():
                         log.info("Exiting script. GitHub Actions will restart it later!")
                         return
                         
-                    log.info("Ad started playing. Waiting 45 seconds...")
-                    page.wait_for_timeout(45000)
+                    log.info("Ad started playing. Waiting 65 seconds to make sure it finishes...")
+                    page.wait_for_timeout(65000)
                     
                     log.info("Reloading for next ad...")
                     page.reload(wait_until="domcontentloaded")
