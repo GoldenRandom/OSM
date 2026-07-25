@@ -269,7 +269,7 @@ class DummyHandler(BaseHTTPRequestHandler):
         pass
 
 def start_server():
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 7860))
     server = HTTPServer(("0.0.0.0", port), DummyHandler)
     log.info(f"Started dummy web server on port {port} for cloud health checks.")
     server.serve_forever()
