@@ -3,8 +3,6 @@ import time
 import re
 import json
 import logging
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from playwright.sync_api import sync_playwright
 import urllib.parse
 
@@ -74,6 +72,17 @@ def interactive_login(pw):
     finally:
         browser.close()
 
+def load_cookies():
+    # If cookies are provided via environment variable (GitHub Secrets), write them to file
+    env_cookies = os.environ.get("OSM_COOKIES")
+    if env_cookies:
+        try:
+            with open(COOKIES_PATH, "w", encoding="utf-8") as f:
+                f.write(env_cookies)
+            log.info("Loaded cookies from GitHub Secrets!")
+        except Exception as e:
+            log.error(f"Failed to load cookies from secrets: {e}")
+
 def get_user_leagues(pw, cookies):
     """Fetch user league slots using API interception."""
     browser = pw.chromium.launch(headless=True)
@@ -139,6 +148,8 @@ def switch_league_slot(pw, target_league):
 
 def claim_loop():
     log.info("Starting Boss Coin Claimer...")
+    
+    load_cookies()
     
     with sync_playwright() as pw:
         if not os.path.exists(COOKIES_PATH):
@@ -222,13 +233,8 @@ def claim_loop():
                         wait_time = int(match.group(1)) if match else 24
                         
                         log.info(f"Limit reached: {text}")
-                        log.info(f"Waiting for {wait_time + 1} minutes before trying again...")
-                        try:
-                            page.locator("button:has-text('Ok')").first.click()
-                        except:
-                            pass
-                        time.sleep((wait_time + 1) * 60)
-                        continue
+                        log.info("Exiting script. GitHub Actions will restart it later!")
+                        return
                         
                     log.info("Ad started playing. Waiting 45 seconds...")
                     page.wait_for_timeout(45000)
@@ -243,39 +249,17 @@ def claim_loop():
                     limit_text = page.locator("text=Come back in").first
                     if limit_text.is_visible(timeout=2000):
                         text = limit_text.inner_text()
-                        match = re.search(r"Come back in (\d+) minutes", text)
-                        wait_time = int(match.group(1)) if match else 24
                         log.info(f"Limit reached (button hidden): {text}")
-                        log.info(f"Waiting for {wait_time + 1} minutes...")
-                        time.sleep((wait_time + 1) * 60)
+                        log.info("Exiting script. GitHub Actions will restart it later!")
+                        return
                     else:
-                        log.warning("'Watch ad' button not found and no limit popup. Waiting 5 minutes.")
-                        time.sleep(300)
+                        log.warning("'Watch ad' button not found and no limit popup. Waiting 10 seconds before checking again...")
+                        page.wait_for_timeout(10000)
                     
             except Exception as e:
                 log.error(f"Error in claim loop: {e}")
-                log.info("Retrying in 1 minute...")
-                time.sleep(60)
-
-class DummyHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(b"Boss Coin Claimer is running 24/7!")
-        
-    def log_message(self, format, *args):
-        # Suppress web server logs so it doesn't spam the console
-        pass
-
-def start_server():
-    port = int(os.environ.get("PORT", 7860))
-    server = HTTPServer(("0.0.0.0", port), DummyHandler)
-    log.info(f"Started dummy web server on port {port} for cloud health checks.")
-    server.serve_forever()
+                log.info("Exiting on error...")
+                return
 
 if __name__ == "__main__":
-    # Start the dummy web server in the background
-    threading.Thread(target=start_server, daemon=True).start()
-    # Start the main claim loop
     claim_loop()
