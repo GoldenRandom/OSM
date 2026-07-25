@@ -50,7 +50,7 @@ def interactive_login(pw):
     """Opens a browser for the user to log in locally."""
     log.info("No cookies found. Opening browser for manual login...")
     try:
-        browser = pw.chromium.launch(headless=False)
+        browser = pw.chromium.launch(headless=False, channel="chrome")
     except Exception as e:
         log.error("Failed to launch visible browser. If you are on a cloud server, you must provide a valid cookies.json file!")
         raise e
@@ -85,7 +85,7 @@ def load_cookies():
 
 def get_user_leagues(pw, cookies):
     """Fetch user league slots using API interception."""
-    browser = pw.chromium.launch(headless=True)
+    browser = pw.chromium.launch(headless=True, channel="chrome")
     context = browser.new_context(viewport={"width": 1280, "height": 800}, user_agent=_USER_AGENT)
     context.add_cookies(cookies)
     page = context.new_page()
