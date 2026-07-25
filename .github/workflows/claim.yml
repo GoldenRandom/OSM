@@ -19,8 +19,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps chromium
+          playwright install chrome
+          playwright install-deps chrome
           
       - name: Run Claimer
         env:
