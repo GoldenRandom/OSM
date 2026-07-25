@@ -3,6 +3,8 @@ import time
 import re
 import json
 import logging
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from playwright.sync_api import sync_playwright
 import urllib.parse
 
@@ -255,5 +257,25 @@ def claim_loop():
                 log.info("Retrying in 1 minute...")
                 time.sleep(60)
 
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"Boss Coin Claimer is running 24/7!")
+        
+    def log_message(self, format, *args):
+        # Suppress web server logs so it doesn't spam the console
+        pass
+
+def start_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), DummyHandler)
+    log.info(f"Started dummy web server on port {port} for cloud health checks.")
+    server.serve_forever()
+
 if __name__ == "__main__":
+    # Start the dummy web server in the background
+    threading.Thread(target=start_server, daemon=True).start()
+    # Start the main claim loop
     claim_loop()
