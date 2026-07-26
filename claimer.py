@@ -1,5 +1,6 @@
 import os
 import time
+import random
 import re
 import json
 import logging
@@ -267,4 +268,8 @@ def claim_loop():
                 return
 
 if __name__ == "__main__":
+    # Add a random delay between 10 seconds and 5 minutes
+    delay_seconds = random.randint(10, 300)
+    log.info(f"Adding a random human-like delay of {delay_seconds} seconds before starting...")
+    time.sleep(delay_seconds)
     claim_loop()
