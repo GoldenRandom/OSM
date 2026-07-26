@@ -6,6 +6,36 @@ import json
 import logging
 from playwright.sync_api import sync_playwright
 import urllib.parse
+import urllib.request
+import base64
+
+def send_whatsapp_message(text):
+    account_sid = os.getenv("TWILIO_SID")
+    auth_token = os.getenv("TWILIO_TOKEN")
+    from_number = os.getenv("TWILIO_FROM")
+    to_number = os.getenv("TWILIO_TO")
+    
+    if not all([account_sid, auth_token, from_number, to_number]):
+        return
+        
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+    data = urllib.parse.urlencode({
+        "From": from_number,
+        "To": to_number,
+        "Body": text
+    }).encode("utf-8")
+    
+    auth_string = f"{account_sid}:{auth_token}"
+    auth_b64 = base64.b64encode(auth_string.encode("utf-8")).decode("utf-8")
+    
+    req = urllib.request.Request(url, data=data, method="POST")
+    req.add_header("Authorization", f"Basic {auth_b64}")
+    
+    try:
+        urllib.request.urlopen(req)
+        log.info("Twilio WhatsApp notification sent!")
+    except Exception as e:
+        log.error(f"Failed to send Twilio WhatsApp message: {e}")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s │ %(levelname)-8s │ %(message)s", datefmt="%H:%M:%S")
@@ -206,6 +236,7 @@ def claim_loop():
         context.add_cookies(cookies)
         
         page = context.new_page()
+        starting_coins = None
         
         while True:
             try:
@@ -213,8 +244,12 @@ def claim_loop():
                 page.goto(f"{BASE_URL}/BusinessClub", wait_until="domcontentloaded", timeout=60000)
                 page.wait_for_timeout(5000)
                 
-                initial_coins = page.evaluate(GET_BOSS_COINS_JS)
-                log.info(f"💰 Current Boss Coins: {initial_coins}")
+                current_coins = page.evaluate(GET_BOSS_COINS_JS)
+                if starting_coins is None:
+                    starting_coins = current_coins
+                    log.info(f"💰 Starting Boss Coins: {starting_coins}")
+                else:
+                    log.info(f"💰 Current Boss Coins: {current_coins}")
                 
                 # Accept privacy cookies if the popup appears
                 try:
@@ -240,6 +275,7 @@ def claim_loop():
                         
                         log.info(f"Limit reached: {text}")
                         log.info("Exiting script. GitHub Actions will restart it later!")
+                        send_whatsapp_message(f"OSM Update ⚽\nStarted with: {starting_coins} coins\nNew total: {current_coins} coins!")
                         return
                         
                     log.info("Ad started playing. Waiting 65 seconds to make sure it finishes...")
@@ -257,6 +293,7 @@ def claim_loop():
                         text = limit_text.inner_text()
                         log.info(f"Limit reached (button hidden): {text}")
                         log.info("Exiting script. GitHub Actions will restart it later!")
+                        send_whatsapp_message(f"OSM Update ⚽\nStarted with: {starting_coins} coins\nNew total: {current_coins} coins!")
                         return
                     else:
                         log.warning("'Watch ad' button not found and no limit popup. Waiting 10 seconds before checking again...")
