@@ -1,8 +1,6 @@
 name: Claim Boss Coins
 
 on:
-  schedule:
-    - cron: '*/20 * * * *' # Runs every 20 minutes
   workflow_dispatch: # Allows you to manually click a button to run it
 
 jobs:
