@@ -248,6 +248,7 @@ def claim_loop():
                 if starting_coins is None:
                     starting_coins = current_coins
                     log.info(f"💰 Starting Boss Coins: {starting_coins}")
+                    send_whatsapp_message(f"▶️ OSM Claimer Started\nCurrent balance: {starting_coins} coins")
                 else:
                     log.info(f"💰 Current Boss Coins: {current_coins}")
                 
