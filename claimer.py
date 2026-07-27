@@ -281,6 +281,7 @@ def claim_loop():
                         log.info(f"Limit reached: {text}")
                         log.info("Exiting script. GitHub Actions will restart it later!")
                         send_whatsapp_message(f"OSM Update ⚽\nStarted with: {starting_coins} coins\nNew total: {current_coins} coins!")
+                        send_whatsapp_message("----------------------------")
                         return
                         
                     log.info("Ad started playing. Waiting 65 seconds to make sure it finishes...")
@@ -299,6 +300,7 @@ def claim_loop():
                         log.info(f"Limit reached (button hidden): {text}")
                         log.info("Exiting script. GitHub Actions will restart it later!")
                         send_whatsapp_message(f"OSM Update ⚽\nStarted with: {starting_coins} coins\nNew total: {current_coins} coins!")
+                        send_whatsapp_message("----------------------------")
                         return
                     else:
                         log.warning("'Watch ad' button not found and no limit popup. Waiting 10 seconds before checking again...")
