@@ -7,35 +7,39 @@ import logging
 from playwright.sync_api import sync_playwright
 import urllib.parse
 import urllib.request
+import json
 import base64
 
 def send_whatsapp_message(text):
-    account_sid = os.getenv("TWILIO_SID")
-    auth_token = os.getenv("TWILIO_TOKEN")
-    from_number = os.getenv("TWILIO_FROM")
-    to_number = os.getenv("TWILIO_TO")
+    id_instance = os.getenv("GREEN_API_INSTANCE")
+    api_token = os.getenv("GREEN_API_TOKEN")
+    phone = os.getenv("WHATSAPP_PHONE")
     
-    if not all([account_sid, auth_token, from_number, to_number]):
+    if not all([id_instance, api_token, phone]):
         return
         
-    url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
-    data = urllib.parse.urlencode({
-        "From": from_number,
-        "To": to_number,
-        "Body": text
+    url = f"https://api.green-api.com/waInstance{id_instance}/sendMessage/{api_token}"
+    
+    # Strip '+' if the user accidentally included it
+    clean_phone = phone.replace("+", "").replace(" ", "")
+    chat_id = f"{clean_phone}@c.us"
+    
+    payload = json.dumps({
+        "chatId": chat_id,
+        "message": text
     }).encode("utf-8")
     
-    auth_string = f"{account_sid}:{auth_token}"
-    auth_b64 = base64.b64encode(auth_string.encode("utf-8")).decode("utf-8")
-    
-    req = urllib.request.Request(url, data=data, method="POST")
-    req.add_header("Authorization", f"Basic {auth_b64}")
+    req = urllib.request.Request(url, data=payload, method="POST")
+    req.add_header("Content-Type", "application/json")
     
     try:
         urllib.request.urlopen(req)
-        log.info("Twilio WhatsApp notification sent!")
+        log.info("Green API WhatsApp notification sent!")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        log.error(f"Failed to send Green API message: HTTP Error {e.code} - {error_body}")
     except Exception as e:
-        log.error(f"Failed to send Twilio WhatsApp message: {e}")
+        log.error(f"Failed to send Green API message: {e}")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s │ %(levelname)-8s │ %(message)s", datefmt="%H:%M:%S")
