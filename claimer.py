@@ -193,30 +193,40 @@ def claim_loop():
         with open(COOKIES_PATH, "r", encoding="utf-8") as f:
             cookies = json.load(f)
 
-        # 1. Switch to Liverpool in Winners Cup
+        # 1. Switch to Target Team
         leagues = get_user_leagues(pw, cookies)
         target_slot = None
         target_league_data = None
         
-        for l in leagues:
-            if "liverpool" in l["team_name"].lower() and "winners cup" in l["league_name"].lower():
-                target_slot = l["slot_index"]
-                target_league_data = l
-                break
-
-        if target_slot is None:
-            log.warning("Could not find Liverpool in Winners Cup exactly. Looking for any Liverpool...")
+        target_team_env = os.environ.get("TARGET_TEAM", "").strip().lower()
+        target_league_env = os.environ.get("TARGET_LEAGUE", "").strip().lower()
+        
+        if target_team_env:
+            log.info(f"Looking for Target Team: '{target_team_env}' (League: '{target_league_env}')")
             for l in leagues:
-                if "liverpool" in l["team_name"].lower():
+                team_match = target_team_env in l["team_name"].lower()
+                league_match = not target_league_env or target_league_env in l["league_name"].lower()
+                
+                if team_match and league_match:
                     target_slot = l["slot_index"]
                     target_league_data = l
                     break
-                    
+
+            if target_slot is None:
+                log.warning(f"Could not find exact match for team '{target_team_env}'. Looking for any partial match...")
+                for l in leagues:
+                    if target_team_env in l["team_name"].lower():
+                        target_slot = l["slot_index"]
+                        target_league_data = l
+                        break
+                        
         if target_slot is not None:
-            log.info(f"Switching to slot {target_slot}...")
+            log.info(f"Switching to slot {target_slot} ({target_league_data['team_name']})...")
             switch_league_slot(pw, target_league_data)
+        elif target_team_env:
+            log.error(f"Could not find team '{target_team_env}' in any slot. Continuing on current slot...")
         else:
-            log.error("Could not find Liverpool in any slot. Continuing anyway...")
+            log.info("No TARGET_TEAM specified. Continuing on current active slot...")
 
         # 2. Launch browser and loop
         log.info("Launching browser...")
