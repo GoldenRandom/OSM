@@ -255,8 +255,21 @@ def claim_loop():
         transfer_status = "?/4"
         try:
             log.info("Checking Transfer List status...")
+            api_loaded = []
+            def handle_res(res):
+                if "api/v1/" in res.url and "players" in res.url:
+                    api_loaded.append(True)
+            page.on("response", handle_res)
+            
             page.goto(f"{BASE_URL}/Transferlist", wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(4000)
+            
+            # Wait dynamically up to 10s for the API to return before reading the DOM
+            for _ in range(20):
+                if api_loaded: break
+                page.wait_for_timeout(500)
+                
+            page.remove_listener("response", handle_res)
+            page.wait_for_timeout(1500) # Give Knockout.js time to update the UI
             
             # Using the exact HTML data-bind provided by the user!
             badge = page.locator("span[data-bind*='availableSellPlayerSlotsAmount']").first
