@@ -250,6 +250,22 @@ def claim_loop():
         context.add_cookies(cookies)
         
         page = context.new_page()
+        
+        # --- Check Transfer List Status First ---
+        transfer_status = "?/4"
+        try:
+            log.info("Checking Transfer List status...")
+            page.goto(f"{BASE_URL}/Transferlist", wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(4000)
+            body_text = page.locator("body").inner_text()
+            match = re.search(r"(\d/4)", body_text)
+            if match:
+                transfer_status = match.group(1)
+                log.info(f"Transfer list: {transfer_status}")
+        except Exception as e:
+            log.error(f"Could not read transfer list: {e}")
+        # ----------------------------------------
+        
         starting_coins = None
         
         while True:
@@ -262,7 +278,7 @@ def claim_loop():
                 if starting_coins is None:
                     starting_coins = current_coins
                     log.info(f"💰 Starting Boss Coins: {starting_coins}")
-                    send_whatsapp_message(f"▶️ OSM Claimer Started\nCurrent balance: {starting_coins} coins")
+                    send_whatsapp_message(f"▶️ OSM Claimer Started\nCurrent balance: {starting_coins} coins\n🛒 Players listed: {transfer_status}")
                 else:
                     log.info(f"💰 Current Boss Coins: {current_coins}")
                 
@@ -290,7 +306,7 @@ def claim_loop():
                         
                         log.info(f"Limit reached: {text}")
                         log.info("Exiting script. GitHub Actions will restart it later!")
-                        send_whatsapp_message(f"OSM Update ⚽\nStarted with: {starting_coins} coins\nNew total: {current_coins} coins!")
+                        send_whatsapp_message(f"OSM Update ⚽\nStarted with: {starting_coins} coins\nNew total: {current_coins} coins!\n🛒 Players listed: {transfer_status}")
                         send_whatsapp_message("----------------------------")
                         return
                         
