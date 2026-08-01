@@ -257,11 +257,23 @@ def claim_loop():
             log.info("Checking Transfer List status...")
             page.goto(f"{BASE_URL}/Transferlist", wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(4000)
-            body_text = page.locator("body").inner_text()
-            match = re.search(r"(\d/4)", body_text)
-            if match:
-                transfer_status = match.group(1)
-                log.info(f"Transfer list: {transfer_status}")
+            
+            # Using the exact HTML data-bind provided by the user!
+            badge = page.locator("span[data-bind*='availableSellPlayerSlotsAmount']").first
+            if badge.is_visible(timeout=2000):
+                text = badge.inner_text()
+                match = re.search(r"(\d/4)", text)
+                if match:
+                    transfer_status = match.group(1)
+            else:
+                # Fallback if the UI changes
+                body_text = page.locator("body").inner_text()
+                matches = re.findall(r"\b([0-4])/4\b", body_text)
+                if matches:
+                    max_listed = max([int(m) for m in matches])
+                    transfer_status = f"{max_listed}/4"
+                    
+            log.info(f"Transfer list: {transfer_status}")
         except Exception as e:
             log.error(f"Could not read transfer list: {e}")
         # ----------------------------------------
