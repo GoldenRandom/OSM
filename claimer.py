@@ -202,7 +202,7 @@ def claim_loop():
         target_league_env = os.environ.get("TARGET_LEAGUE", "").strip().lower()
         
         if target_team_env:
-            log.info(f"Looking for Target Team: '{target_team_env}' (League: '{target_league_env}')")
+            log.info("Looking for Target Team in slots...")
             for l in leagues:
                 team_match = target_team_env in l["team_name"].lower()
                 league_match = not target_league_env or target_league_env in l["league_name"].lower()
@@ -213,7 +213,7 @@ def claim_loop():
                     break
 
             if target_slot is None:
-                log.warning(f"Could not find exact match for team '{target_team_env}'. Looking for any partial match...")
+                log.warning("Could not find exact match for target team. Looking for any partial match...")
                 for l in leagues:
                     if target_team_env in l["team_name"].lower():
                         target_slot = l["slot_index"]
@@ -221,10 +221,10 @@ def claim_loop():
                         break
                         
         if target_slot is not None:
-            log.info(f"Switching to slot {target_slot} ({target_league_data['team_name']})...")
+            log.info(f"Switching to slot {target_slot}...")
             switch_league_slot(pw, target_league_data)
         elif target_team_env:
-            log.error(f"Could not find team '{target_team_env}' in any slot. Continuing on current slot...")
+            log.error("Could not find target team in any slot. Continuing on current slot...")
         else:
             log.info("No TARGET_TEAM specified. Continuing on current active slot...")
 
