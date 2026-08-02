@@ -286,7 +286,7 @@ def claim_loop():
                     max_listed = max([int(m) for m in matches])
                     transfer_status = f"{max_listed}/4"
                     
-            log.info(f"Transfer list: {transfer_status}")
+            log.info("Transfer list status checked.")
         except Exception as e:
             log.error(f"Could not read transfer list: {e}")
         # ----------------------------------------
@@ -302,10 +302,10 @@ def claim_loop():
                 current_coins = page.evaluate(GET_BOSS_COINS_JS)
                 if starting_coins is None:
                     starting_coins = current_coins
-                    log.info(f"💰 Starting Boss Coins: {starting_coins}")
+                    log.info("💰 Checked starting Boss Coins.")
                     send_whatsapp_message(f"▶️ OSM Claimer Started\nCurrent balance: {starting_coins} coins\n🛒 Players listed: {transfer_status}")
                 else:
-                    log.info(f"💰 Current Boss Coins: {current_coins}")
+                    log.info("💰 Checked current Boss Coins.")
                 
                 # Accept privacy cookies if the popup appears
                 try:
@@ -343,7 +343,7 @@ def claim_loop():
                     page.wait_for_timeout(4000)
                     
                     coins = page.evaluate(GET_BOSS_COINS_JS)
-                    log.info(f"🎉 New total of Boss Coins: {coins}")
+                    log.info("💰 Boss Coins successfully updated.")
                 else:
                     limit_text = page.locator("text=Come back in").first
                     if limit_text.is_visible(timeout=2000):
